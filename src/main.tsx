@@ -9,6 +9,7 @@ import { AppProvider } from './contexts/AppContext'
 import Dashboard from './pages/Dashboard'
 import MyTasks from './pages/MyTasks'
 import Projects from './pages/Projects'
+import ProjectDetail from './pages/ProjectDetail'
 import Tags from './pages/Tags'
 import Calendar from './pages/Calendar'
 
@@ -20,17 +21,22 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: 'tasks', element: <MyTasks /> },
       { path: 'projects', element: <Projects /> },
+      { path: 'projects/:projectId', element: <ProjectDetail /> },
       { path: 'tags', element: <Tags /> },
       { path: 'calendar', element: <Calendar /> },
     ],
   },
 ]);
 
+import { ProjectProvider } from './contexts/ProjectContext'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <AppProvider>
-        <RouterProvider router={router} />
+        <ProjectProvider>
+          <RouterProvider router={router} />
+        </ProjectProvider>
       </AppProvider>
     </ThemeProvider>
   </StrictMode>,

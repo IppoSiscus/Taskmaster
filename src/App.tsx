@@ -6,6 +6,7 @@ import FloatingActionButton from './components/FloatingActionButton';
 import { AppContext } from './contexts/AppContext';
 import Modal from './components/Modal';
 import QuickAddTaskForm from './components/QuickAddTaskForm';
+import ProjectModal from './components/ProjectModal';
 
 function App() {
   const context = useContext(AppContext);
@@ -37,6 +38,7 @@ function App() {
       >
         <QuickAddTaskForm />
       </Modal>
+      <ProjectModal />
     </div>
   );
 }
