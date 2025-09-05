@@ -29,13 +29,16 @@ const router = createBrowserRouter([
 ]);
 
 import { ProjectProvider } from './contexts/ProjectContext'
+import { TaskProvider } from './contexts/TaskContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <AppProvider>
         <ProjectProvider>
-          <RouterProvider router={router} />
+          <TaskProvider>
+            <RouterProvider router={router} />
+          </TaskProvider>
         </ProjectProvider>
       </AppProvider>
     </ThemeProvider>

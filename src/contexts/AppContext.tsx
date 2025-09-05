@@ -1,5 +1,6 @@
 import React, { createContext, useState, useMemo } from 'react';
 import { Project } from './ProjectContext';
+import { Task } from './TaskContext';
 
 interface AppContextType {
   isSidebarOpen: boolean;
@@ -12,6 +13,10 @@ interface AppContextType {
   openProjectModal: (project?: Project) => void;
   closeProjectModal: () => void;
   editingProject: Project | null;
+  isTaskDetailModalOpen: boolean;
+  openTaskDetailModal: (task: Task) => void;
+  closeTaskDetailModal: () => void;
+  selectedTask: Task | null;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -26,6 +31,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [isQuickAddModalOpen, setQuickAddModalOpen] = useState(false);
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [isTaskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -42,6 +49,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setProjectModalOpen(false);
   };
 
+  const openTaskDetailModal = (task: Task) => {
+    setSelectedTask(task);
+    setTaskDetailModalOpen(true);
+  };
+
+  const closeTaskDetailModal = () => {
+    setSelectedTask(null);
+    setTaskDetailModalOpen(false);
+  };
+
   const value = useMemo(
     () => ({
       isSidebarOpen,
@@ -54,8 +71,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       openProjectModal,
       closeProjectModal,
       editingProject,
+      isTaskDetailModalOpen,
+      openTaskDetailModal,
+      closeTaskDetailModal,
+      selectedTask,
     }),
-    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject]
+    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject, isTaskDetailModalOpen, selectedTask]
   );
 
   return (
