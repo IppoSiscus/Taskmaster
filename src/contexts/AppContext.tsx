@@ -6,16 +6,15 @@ interface AppContextType {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   isRightPanelOpen: boolean;
-  toggleRightPanel: () => void;
+  openRightPanel: () => void;
+  closeRightPanel: () => void;
   isQuickAddModalOpen: boolean;
   toggleQuickAddModal: () => void;
   isProjectModalOpen: boolean;
   openProjectModal: (project?: Project) => void;
   closeProjectModal: () => void;
   editingProject: Project | null;
-  isTaskDetailModalOpen: boolean;
-  openTaskDetailModal: (task: Task) => void;
-  closeTaskDetailModal: () => void;
+  selectTask: (task: Task) => void;
   selectedTask: Task | null;
 }
 
@@ -31,12 +30,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [isQuickAddModalOpen, setQuickAddModalOpen] = useState(false);
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [isTaskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-  const toggleRightPanel = () => setRightPanelOpen((prev) => !prev);
+  const openRightPanel = () => setRightPanelOpen(true);
+  const closeRightPanel = () => {
+    setRightPanelOpen(false);
+    setSelectedTask(null); // Deselect task when closing panel
+  };
   const toggleQuickAddModal = () => setQuickAddModalOpen((prev) => !prev);
 
   const openProjectModal = (project?: Project) => {
@@ -49,14 +51,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setProjectModalOpen(false);
   };
 
-  const openTaskDetailModal = (task: Task) => {
+  const selectTask = (task: Task) => {
     setSelectedTask(task);
-    setTaskDetailModalOpen(true);
-  };
-
-  const closeTaskDetailModal = () => {
-    setSelectedTask(null);
-    setTaskDetailModalOpen(false);
+    openRightPanel();
   };
 
   const value = useMemo(
@@ -64,19 +61,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       isSidebarOpen,
       toggleSidebar,
       isRightPanelOpen,
-      toggleRightPanel,
+      openRightPanel,
+      closeRightPanel,
       isQuickAddModalOpen,
       toggleQuickAddModal,
       isProjectModalOpen,
       openProjectModal,
       closeProjectModal,
       editingProject,
-      isTaskDetailModalOpen,
-      openTaskDetailModal,
-      closeTaskDetailModal,
+      selectTask,
       selectedTask,
     }),
-    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject, isTaskDetailModalOpen, selectedTask]
+    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject, selectedTask]
   );
 
   return (

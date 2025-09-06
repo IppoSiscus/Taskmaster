@@ -34,6 +34,7 @@ export interface Task {
   completedAt: Date | null;
   createdAt: Date;
   modifiedAt: Date;
+  order: number;
 }
 
 type NewTaskData = {
@@ -52,6 +53,8 @@ interface TaskContextType {
   addTask: (taskData: NewTaskData) => void;
   updateTask: (taskId: string, taskData: UpdateTaskData) => void;
   toggleTaskCompletion: (taskId: string) => void;
+  moveTask: (taskId: string, newPhaseId: string, newOrder: number) => void;
+  reorderTasks: (reorderedTasks: Task[], phaseId: string) => void;
 }
 
 // --- MOCK DATA ---
@@ -80,6 +83,7 @@ const mockTasks: Task[] = [
     completedAt: null,
     createdAt: new Date(),
     modifiedAt: new Date(),
+    order: 0,
   },
   {
     id: 'task-2',
@@ -99,6 +103,7 @@ const mockTasks: Task[] = [
     completedAt: null,
     createdAt: new Date(),
     modifiedAt: new Date(),
+    order: 0,
   },
   {
     id: 'task-3',
@@ -118,6 +123,7 @@ const mockTasks: Task[] = [
     completedAt: null,
     createdAt: new Date(),
     modifiedAt: new Date(),
+    order: 0,
   },
 ];
 
@@ -152,6 +158,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completedAt: null,
       createdAt: new Date(),
       modifiedAt: new Date(),
+      order: Date.now(), // Use timestamp for simple initial order
     };
     setTasks(prev => [...prev, newTask]);
   };
@@ -182,6 +189,24 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  const moveTask = (taskId: string, newPhaseId: string, newOrder: number) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId
+          ? { ...task, phaseId: newPhaseId, order: newOrder }
+          : task
+      )
+    );
+  };
+
+  const reorderTasks = (reorderedTasks: Task[], phaseId: string) => {
+    const reorderedWithOrder = reorderedTasks.map((task, index) => ({ ...task, order: index }));
+    setTasks(prev => {
+        const otherTasks = prev.filter(task => task.phaseId !== phaseId);
+        return [...otherTasks, ...reorderedWithOrder];
+    });
+  };
+
   const value = useMemo(() => ({
     tasks,
     tags,
@@ -189,6 +214,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addTask,
     updateTask,
     toggleTaskCompletion,
+    moveTask,
+    reorderTasks,
   }), [tasks, tags]);
 
   return (

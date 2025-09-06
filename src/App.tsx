@@ -7,7 +7,6 @@ import { AppContext } from './contexts/AppContext';
 import Modal from './components/Modal';
 import QuickAddTaskForm from './components/QuickAddTaskForm';
 import ProjectModal from './components/ProjectModal';
-import TaskDetailModal from './components/TaskDetailModal';
 
 function App() {
   const context = useContext(AppContext);
@@ -40,7 +39,6 @@ function App() {
         <QuickAddTaskForm />
       </Modal>
       <ProjectModal />
-      <TaskDetailModal />
     </div>
   );
 }

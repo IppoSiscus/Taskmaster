@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { ProjectContext } from '../contexts/ProjectContext';
 import { TaskContext, Priority, Task, Recurrence } from '../contexts/TaskContext';
-import Modal from './Modal';
 
 // Sub-component for the checklist
 const SubtaskList: React.FC<{ parentTask: Task }> = ({ parentTask }) => {
@@ -59,15 +58,14 @@ const SubtaskList: React.FC<{ parentTask: Task }> = ({ parentTask }) => {
     );
 }
 
-
-const TaskDetailModal: React.FC = () => {
+const TaskDetails: React.FC = () => {
   const appContext = useContext(AppContext);
   const projectContext = useContext(ProjectContext);
   const taskContext = useContext(TaskContext);
 
   if (!appContext || !projectContext || !taskContext) return null;
 
-  const { isTaskDetailModalOpen, closeTaskDetailModal, selectedTask } = appContext;
+  const { selectedTask } = appContext;
   const { users } = projectContext;
   const { updateTask } = taskContext;
 
@@ -91,18 +89,19 @@ const TaskDetailModal: React.FC = () => {
     e.preventDefault();
     if (!selectedTask) return;
     updateTask(selectedTask.id, { title, description, assigneeId, priority, recurrence });
-    closeTaskDetailModal();
+    // Maybe don't close the panel on save, let the user do it
   };
 
-  if (!selectedTask) return null;
+  if (!selectedTask) {
+      return (
+          <div className="p-4 text-center text-gray-500">
+              Select a task to see its details.
+          </div>
+      )
+  }
 
   return (
-    <Modal
-      isOpen={isTaskDetailModalOpen}
-      onClose={closeTaskDetailModal}
-      title="Edit Task"
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
         <input
           type="text"
           value={title}
@@ -171,8 +170,7 @@ const TaskDetailModal: React.FC = () => {
           Save Changes
         </button>
       </form>
-    </Modal>
   );
 };
 
-export default TaskDetailModal;
+export default TaskDetails;

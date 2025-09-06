@@ -1,8 +1,11 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { ProjectContext } from '../contexts/ProjectContext';
-import { TaskContext } from '../contexts/TaskContext';
-import TaskCard from '../components/TaskCard';
+import { TaskContext, Priority } from '../contexts/TaskContext';
+import KanbanColumn from '../components/KanbanColumn';
+import KanbanFilters from '../components/KanbanFilters';
 
 const ProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -14,37 +17,80 @@ const ProjectDetail: React.FC = () => {
   }
 
   const { getProject } = projectContext;
-  const { getTasksByProjectId } = taskContext;
+  const { tasks, moveTask, reorderTasks } = taskContext;
 
   const project = projectId ? getProject(projectId) : undefined;
-  const tasks = projectId ? getTasksByProjectId(projectId) : [];
+  const projectTasks = useMemo(() => tasks.filter(t => t.projectId === projectId), [tasks, projectId]);
+
+  const [filters, setFilters] = useState({ searchTerm: '', assigneeId: '', priority: '' as Priority | '' });
+
+  const filteredTasks = useMemo(() => {
+    return projectTasks.filter(task => {
+        const searchMatch = task.title.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        const assigneeMatch = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
+        const priorityMatch = filters.priority ? task.priority === filters.priority : true;
+        return searchMatch && assigneeMatch && priorityMatch;
+    });
+  }, [projectTasks, filters]);
 
   if (!project) {
     return <div>Project not found.</div>;
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold">{project.name}</h1>
-        <p className="text-gray-500 mt-1">{project.description}</p>
-      </div>
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-      <div className="flex-1 flex gap-4 overflow-x-auto">
-        {project.phases.sort((a, b) => a.order - b.order).map(phase => (
-          <div key={phase.id} className="w-72 bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex-shrink-0">
-            <h3 className="font-bold mb-3 px-1">{phase.name}</h3>
-            <div>
-              {tasks
-                .filter(task => task.phaseId === phase.id)
-                .map(task => (
-                  <TaskCard key={task.id} task={task} />
+    if (!over) return;
+
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    const activeTask = projectTasks.find(t => t.id === activeId);
+    if (!activeTask) return;
+
+    // Find the container (phase) the `over` item is in.
+    // `over.data.current` would be set if `over` is a sortable item (a task).
+    // If `over` is a droppable container (a column), its id is the phaseId.
+    const overPhaseId = over.data.current?.sortable?.containerId || overId;
+
+    if (activeTask.phaseId !== overPhaseId) {
+        // Task moved to a new column
+        const tasksInNewPhase = tasks.filter(t => t.phaseId === overPhaseId);
+        moveTask(activeId, overPhaseId, tasksInNewPhase.length);
+    } else {
+        // Task moved within the same column
+        const tasksInSamePhase = tasks.filter(t => t.phaseId === overPhaseId);
+        const oldIndex = tasksInSamePhase.findIndex(t => t.id === activeId);
+        const newIndex = tasksInSamePhase.findIndex(t => t.id === overId);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const reordered = arrayMove(tasksInSamePhase, oldIndex, newIndex);
+            reorderTasks(reordered, overPhaseId);
+        }
+    }
+  };
+
+  return (
+    <DndContext onDragEnd={onDragEnd}>
+        <div className="flex flex-col h-full">
+            <div className="mb-4">
+                <h1 className="text-3xl font-bold">{project.name}</h1>
+                <p className="text-gray-500 mt-1">{project.description}</p>
+            </div>
+
+            <KanbanFilters onFilterChange={setFilters} />
+
+            <div className="flex-1 flex gap-4 overflow-x-auto">
+                {project.phases.sort((a, b) => a.order - b.order).map(phase => (
+                    <KanbanColumn
+                        key={phase.id}
+                        phase={phase}
+                        tasks={filteredTasks.filter(task => task.phaseId === phase.id)}
+                    />
                 ))}
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
+        </div>
+    </DndContext>
   );
 };
 

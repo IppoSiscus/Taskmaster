@@ -1,4 +1,6 @@
 import React, { useContext } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Task, Priority, TaskContext } from '../contexts/TaskContext';
 import { AppContext } from '../contexts/AppContext';
 import { ProjectContext, User } from '../contexts/ProjectContext';
@@ -25,11 +27,42 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : 0;
 
   const handleCardClick = () => {
-    appContext?.openTaskDetailModal(task);
+    appContext?.selectTask(task);
+  };
+
+  const getDueDateColor = (dueDate: Date | null): string => {
+    if (!dueDate) return 'text-gray-500';
+    const today = new Date();
+    const aDay = 24 * 60 * 60 * 1000;
+    today.setHours(0, 0, 0, 0);
+
+    if (dueDate < today) return 'text-red-500'; // Overdue
+    if (dueDate.getTime() - today.getTime() < 3 * aDay) return 'text-yellow-500'; // Due soon
+    return 'text-gray-500';
+  }
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
   };
 
   return (
-    <div onClick={handleCardClick} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={handleCardClick}
+      className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow mb-2 cursor-grab hover:bg-gray-50 dark:hover:bg-gray-700 touch-none"
+    >
       <div className="flex justify-between items-start mb-2">
         <span className="text-sm font-medium">{task.title}</span>
         {task.priority && (
@@ -65,7 +98,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
             <MessageSquare size={14} /> 0
           </div>
           {task.dueDate && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className={`flex items-center gap-1 text-xs ${getDueDateColor(task.dueDate)}`}>
                 <Calendar size={14} />
                 <span>{task.dueDate.toLocaleDateString()}</span>
             </div>
