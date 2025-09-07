@@ -9,7 +9,9 @@ interface AppContextType {
   openRightPanel: () => void;
   closeRightPanel: () => void;
   isQuickAddModalOpen: boolean;
-  toggleQuickAddModal: () => void;
+  openQuickAddModal: (defaultDate?: Date) => void;
+  closeQuickAddModal: () => void;
+  quickAddModalDate: Date | null;
   isProjectModalOpen: boolean;
   openProjectModal: (project?: Project) => void;
   closeProjectModal: () => void;
@@ -28,6 +30,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isRightPanelOpen, setRightPanelOpen] = useState(false);
   const [isQuickAddModalOpen, setQuickAddModalOpen] = useState(false);
+  const [quickAddModalDate, setQuickAddModalDate] = useState<Date | null>(null);
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -39,7 +42,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setRightPanelOpen(false);
     setSelectedTask(null); // Deselect task when closing panel
   };
-  const toggleQuickAddModal = () => setQuickAddModalOpen((prev) => !prev);
+
+  const openQuickAddModal = (defaultDate?: Date) => {
+    setQuickAddModalDate(defaultDate || null);
+    setQuickAddModalOpen(true);
+  };
+
+  const closeQuickAddModal = () => {
+    setQuickAddModalOpen(false);
+    setQuickAddModalDate(null);
+  };
 
   const openProjectModal = (project?: Project) => {
     setEditingProject(project || null);
@@ -64,7 +76,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       openRightPanel,
       closeRightPanel,
       isQuickAddModalOpen,
-      toggleQuickAddModal,
+      openQuickAddModal,
+      closeQuickAddModal,
+      quickAddModalDate,
       isProjectModalOpen,
       openProjectModal,
       closeProjectModal,
@@ -72,7 +86,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       selectTask,
       selectedTask,
     }),
-    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject, selectedTask]
+    [isSidebarOpen, isRightPanelOpen, isQuickAddModalOpen, isProjectModalOpen, editingProject, selectedTask, quickAddModalDate]
   );
 
   return (

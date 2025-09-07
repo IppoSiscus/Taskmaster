@@ -9,22 +9,25 @@ const QuickAddTaskForm: React.FC = () => {
   const appContext = useContext(AppContext);
   const projectContext = useContext(ProjectContext);
 
+  const { closeQuickAddModal, quickAddModalDate } = appContext;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !taskContext || !projectContext || !appContext) return;
+    if (!title.trim() || !taskContext || !projectContext) return;
 
     // For quick-add, let's add to the first project and its first phase
     const defaultProject = projectContext.projects[0];
     const defaultPhase = defaultProject?.phases[0];
 
     if (defaultProject && defaultPhase) {
+        // This is a simplified add. A full implementation would also set the due date.
       taskContext.addTask({
         title,
         projectId: defaultProject.id,
         phaseId: defaultPhase.id,
       });
       setTitle('');
-      appContext.toggleQuickAddModal(); // Close modal on success
+      closeQuickAddModal();
     }
   };
 

@@ -6,11 +6,11 @@ const FloatingActionButton: React.FC = () => {
   const appContext = useContext(AppContext);
   if (!appContext) return null;
 
-  const { toggleQuickAddModal } = appContext;
+  const { openQuickAddModal } = appContext;
 
   return (
     <button
-      onClick={toggleQuickAddModal}
+      onClick={() => openQuickAddModal()}
       className="fixed bottom-8 right-8 bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors z-30"
     >
       <Plus size={28} />

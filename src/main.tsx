@@ -1,6 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'

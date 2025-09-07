@@ -15,7 +15,7 @@ function App() {
     return <div>Loading...</div>;
   }
 
-  const { isRightPanelOpen, isSidebarOpen, toggleSidebar, isQuickAddModalOpen, toggleQuickAddModal } = context;
+  const { isRightPanelOpen, isSidebarOpen, toggleSidebar, isQuickAddModalOpen, closeQuickAddModal } = context;
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 relative transition-colors duration-300">
@@ -33,7 +33,7 @@ function App() {
       )}
       <Modal
         isOpen={isQuickAddModalOpen}
-        onClose={toggleQuickAddModal}
+        onClose={closeQuickAddModal}
         title="Quick Add Task"
       >
         <QuickAddTaskForm />

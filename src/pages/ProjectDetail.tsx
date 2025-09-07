@@ -3,9 +3,9 @@ import { useParams } from 'react-router-dom';
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { ProjectContext } from '../contexts/ProjectContext';
-import { TaskContext, Priority } from '../contexts/TaskContext';
+import { TaskContext, Priority, TaskStatus } from '../contexts/TaskContext';
 import KanbanColumn from '../components/KanbanColumn';
-import KanbanFilters from '../components/KanbanFilters';
+import AdvancedFilters, { FilterValues } from '../components/AdvancedFilters';
 
 const ProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -22,14 +22,27 @@ const ProjectDetail: React.FC = () => {
   const project = projectId ? getProject(projectId) : undefined;
   const projectTasks = useMemo(() => tasks.filter(t => t.projectId === projectId), [tasks, projectId]);
 
-  const [filters, setFilters] = useState({ searchTerm: '', assigneeId: '', priority: '' as Priority | '' });
+  const [filters, setFilters] = useState<FilterValues>({
+    searchTerm: '',
+    assigneeId: '',
+    priority: '',
+    status: '',
+    dateRange: { startDate: undefined, endDate: undefined },
+  });
 
   const filteredTasks = useMemo(() => {
     return projectTasks.filter(task => {
-        const searchMatch = task.title.toLowerCase().includes(filters.searchTerm.toLowerCase());
-        const assigneeMatch = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
-        const priorityMatch = filters.priority ? task.priority === filters.priority : true;
-        return searchMatch && assigneeMatch && priorityMatch;
+        const searchMatch = filters.searchTerm === '' ||
+                            task.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+                            task.description.toLowerCase().includes(filters.searchTerm.toLowerCase());
+
+        const assigneeMatch = !filters.assigneeId || task.assigneeId === filters.assigneeId;
+        const priorityMatch = !filters.priority || task.priority === filters.priority;
+        const statusMatch = !filters.status || task.status === filters.status;
+
+        // Date range filtering would be implemented here
+
+        return searchMatch && assigneeMatch && priorityMatch && statusMatch;
     });
   }, [projectTasks, filters]);
 
@@ -78,7 +91,7 @@ const ProjectDetail: React.FC = () => {
                 <p className="text-gray-500 mt-1">{project.description}</p>
             </div>
 
-            <KanbanFilters onFilterChange={setFilters} />
+            <AdvancedFilters onFilterChange={setFilters} />
 
             <div className="flex-1 flex gap-4 overflow-x-auto">
                 {project.phases.sort((a, b) => a.order - b.order).map(phase => (
