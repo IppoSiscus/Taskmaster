@@ -16,6 +16,29 @@ export interface Tag {
   name: string;
 }
 
+export interface Comment {
+    id: string;
+    authorId: User['id'];
+    content: string;
+    createdAt: Date;
+}
+
+export interface Attachment {
+    id: string;
+    fileName: string;
+    url: string;
+    type: 'image' | 'file';
+    size: number; // in bytes
+    uploadedAt: Date;
+}
+
+export interface ActivityLogEntry {
+    id: string;
+    authorId: User['id'];
+    action: string;
+    timestamp: Date;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -35,6 +58,9 @@ export interface Task {
   createdAt: Date;
   modifiedAt: Date;
   order: number;
+  comments: Comment[];
+  attachments: Attachment[];
+  activityLog: ActivityLogEntry[];
 }
 
 type NewTaskData = {
@@ -55,6 +81,9 @@ interface TaskContextType {
   toggleTaskCompletion: (taskId: string) => void;
   moveTask: (taskId: string, newPhaseId: string, newOrder: number) => void;
   reorderTasks: (reorderedTasks: Task[], phaseId: string) => void;
+  addComment: (taskId: string, commentText: string) => void;
+  deleteTask: (taskId: string) => void;
+  duplicateTask: (taskId: string) => void;
 }
 
 // --- MOCK DATA ---
@@ -84,6 +113,16 @@ const mockTasks: Task[] = [
     createdAt: new Date(),
     modifiedAt: new Date(),
     order: 0,
+    comments: [
+        { id: 'comment-1', authorId: '1', content: 'What do you think about using a gradient for the main button?', createdAt: new Date() }
+    ],
+    attachments: [
+        { id: 'att-1', fileName: 'mockup-v1.png', url: '#', type: 'image', size: 1024 * 150, uploadedAt: new Date() }
+    ],
+    activityLog: [
+        { id: 'log-1', authorId: '1', action: 'created this task.', timestamp: new Date() },
+        { id: 'log-2', authorId: '2', action: 'changed the due date.', timestamp: new Date() }
+    ],
   },
   {
     id: 'task-2',
@@ -104,6 +143,9 @@ const mockTasks: Task[] = [
     createdAt: new Date(),
     modifiedAt: new Date(),
     order: 0,
+    comments: [],
+    attachments: [],
+    activityLog: [],
   },
   {
     id: 'task-3',
@@ -124,6 +166,9 @@ const mockTasks: Task[] = [
     createdAt: new Date(),
     modifiedAt: new Date(),
     order: 0,
+    comments: [],
+    attachments: [],
+    activityLog: [],
   },
 ];
 
@@ -159,17 +204,32 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date(),
       modifiedAt: new Date(),
       order: Date.now(), // Use timestamp for simple initial order
+      comments: [],
+      attachments: [],
+      activityLog: [{ id: 'log-new-1', authorId: '1', action: 'created this task.', timestamp: new Date() }],
     };
     setTasks(prev => [...prev, newTask]);
   };
 
   const updateTask = (taskId: string, taskData: UpdateTaskData) => {
     setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId
-          ? { ...task, ...taskData, modifiedAt: new Date() }
-          : task
-      )
+      prev.map(task => {
+        if (task.id === taskId) {
+          const newLogEntry: ActivityLogEntry = {
+            id: `log-${Date.now()}`,
+            authorId: '1', // Hardcoded current user
+            action: `updated the task.`, // Simplified message
+            timestamp: new Date(),
+          };
+          return {
+            ...task,
+            ...taskData,
+            modifiedAt: new Date(),
+            activityLog: [...task.activityLog, newLogEntry],
+          };
+        }
+        return task;
+      })
     );
   };
 
@@ -207,6 +267,39 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const addComment = (taskId: string, commentText: string) => {
+    setTasks(prev => prev.map(task => {
+        if (task.id === taskId) {
+            const newComment: Comment = {
+                id: `comment-${Date.now()}`,
+                authorId: '1', // Hardcoded current user
+                content: commentText,
+                createdAt: new Date(),
+            };
+            return { ...task, comments: [...task.comments, newComment] };
+        }
+        return task;
+    }));
+  };
+
+  const deleteTask = (taskId: string) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId && task.parentTaskId !== taskId)); // Also remove subtasks
+  };
+
+  const duplicateTask = (taskId: string) => {
+    const taskToDuplicate = tasks.find(task => task.id === taskId);
+    if (!taskToDuplicate) return;
+    const newTask: Task = {
+        ...taskToDuplicate,
+        id: `task-${Date.now()}`,
+        title: `${taskToDuplicate.title} (Copy)`,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
+        order: Date.now(),
+    };
+    setTasks(prev => [...prev, newTask]);
+  };
+
   const value = useMemo(() => ({
     tasks,
     tags,
@@ -216,6 +309,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toggleTaskCompletion,
     moveTask,
     reorderTasks,
+    addComment,
+    deleteTask,
+    duplicateTask,
   }), [tasks, tags]);
 
   return (

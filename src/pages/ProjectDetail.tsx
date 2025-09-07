@@ -63,7 +63,7 @@ const ProjectDetail: React.FC = () => {
         const oldIndex = tasksInSamePhase.findIndex(t => t.id === activeId);
         const newIndex = tasksInSamePhase.findIndex(t => t.id === overId);
 
-        if (oldIndex !== -1 && newIndex !== -1) {
+        if (activeId !== overId && oldIndex !== -1 && newIndex !== -1) {
             const reordered = arrayMove(tasksInSamePhase, oldIndex, newIndex);
             reorderTasks(reordered, overPhaseId);
         }

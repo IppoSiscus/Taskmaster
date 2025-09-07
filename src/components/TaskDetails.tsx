@@ -2,6 +2,9 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { ProjectContext } from '../contexts/ProjectContext';
 import { TaskContext, Priority, Task, Recurrence } from '../contexts/TaskContext';
+import CommentList from './CommentList';
+import ActivityLog from './ActivityLog';
+import AttachmentList from './AttachmentList';
 
 // Sub-component for the checklist
 const SubtaskList: React.FC<{ parentTask: Task }> = ({ parentTask }) => {
@@ -63,6 +66,8 @@ const TaskDetails: React.FC = () => {
   const projectContext = useContext(ProjectContext);
   const taskContext = useContext(TaskContext);
 
+  const [activeTab, setActiveTab] = useState<'details' | 'comments' | 'activity' | 'attachments'>('details');
+
   if (!appContext || !projectContext || !taskContext) return null;
 
   const { selectedTask } = appContext;
@@ -82,6 +87,7 @@ const TaskDetails: React.FC = () => {
       setAssigneeId(selectedTask.assigneeId);
       setPriority(selectedTask.priority);
       setRecurrence(selectedTask.recurrence);
+      setActiveTab('details'); // Reset to details tab when task changes
     }
   }, [selectedTask]);
 
@@ -89,7 +95,6 @@ const TaskDetails: React.FC = () => {
     e.preventDefault();
     if (!selectedTask) return;
     updateTask(selectedTask.id, { title, description, assigneeId, priority, recurrence });
-    // Maybe don't close the panel on save, let the user do it
   };
 
   if (!selectedTask) {
@@ -100,76 +105,106 @@ const TaskDetails: React.FC = () => {
       )
   }
 
-  return (
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="text-lg font-bold bg-transparent w-full focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 rounded-md p-2"
-        />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add a description..."
-          className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-          rows={3}
-        />
-
-        <SubtaskList parentTask={selectedTask} />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Assignee</label>
-            <select
-              value={assigneeId || ''}
-              onChange={(e) => setAssigneeId(e.target.value || null)}
-              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-            >
-              <option value="">Unassigned</option>
-              {users.map(user => (
-                <option key={user.id} value={user.id}>{user.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Priority</label>
-            <select
-              value={priority || ''}
-              onChange={(e) => setPriority(e.target.value as Priority || null)}
-              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-            >
-              <option value="">None</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Recurrence</label>
-            <select
-              value={recurrence?.type || ''}
-              onChange={(e) => {
-                const type = e.target.value as Recurrence['type'];
-                if (type) {
-                  setRecurrence({ type, pattern: {}, nextDueDate: new Date() }); // Stub
-                } else {
-                  setRecurrence(null);
-                }
-              }}
-              className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-            >
-              <option value="">None</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-700">
-          Save Changes
+  const TabButton: React.FC<{tabName: 'details' | 'comments' | 'activity' | 'attachments', children: React.ReactNode}> = ({ tabName, children }) => {
+    const isActive = activeTab === tabName;
+    return (
+        <button
+            onClick={() => setActiveTab(tabName)}
+            className={`px-4 py-2 text-sm font-medium ${isActive ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}
+        >
+            {children}
         </button>
-      </form>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex gap-2 px-4">
+                <TabButton tabName="details">Details</TabButton>
+                <TabButton tabName="comments">Comments</TabButton>
+                <TabButton tabName="activity">Activity</TabButton>
+                <TabButton tabName="attachments">Attachments</TabButton>
+            </nav>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+            {activeTab === 'details' && (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-lg font-bold bg-transparent w-full focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 rounded-md p-2"
+                    />
+                    <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Add a description..."
+                    className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                    rows={3}
+                    />
+
+                    <SubtaskList parentTask={selectedTask} />
+
+                    <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Assignee</label>
+                        <select
+                        value={assigneeId || ''}
+                        onChange={(e) => setAssigneeId(e.target.value || null)}
+                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <option value="">Unassigned</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>{user.name}</option>
+                        ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Priority</label>
+                        <select
+                        value={priority || ''}
+                        onChange={(e) => setPriority(e.target.value as Priority || null)}
+                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <option value="">None</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Recurrence</label>
+                        <select
+                        value={recurrence?.type || ''}
+                        onChange={(e) => {
+                            const type = e.target.value as Recurrence['type'];
+                            if (type) {
+                            setRecurrence({ type, pattern: {}, nextDueDate: new Date() }); // Stub
+                            } else {
+                            setRecurrence(null);
+                            }
+                        }}
+                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <option value="">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    </div>
+                    <button type="submit" className="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-700">
+                    Save Changes
+                    </button>
+                </form>
+            )}
+            {activeTab === 'comments' && <CommentList task={selectedTask} />}
+            {activeTab === 'activity' && <ActivityLog task={selectedTask} />}
+            {activeTab === 'attachments' && <AttachmentList task={selectedTask} />}
+        </div>
+    </div>
   );
 };
 
